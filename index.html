@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#edf6fd">
+  <meta name="description" content="동두천양주교육연구회 AI 지구과학 탐구 연구회의 결과 모음. 교사들이 만든 시뮬레이션과 탐구 자료를 수업에서 바로 만나보세요.">
+  <title>(동두천양주교육연구회) AI 지구과학 탐구 연구회 결과 모음</title>
+  <script>
+    // 새 프로그램은 이 배열에 객체 한 줄을 추가하세요. author, school은 선택 항목입니다.
+    const programs = [
+      { title: "계절별 별자리, 내행성, 외행성 시뮬레이터", category: "우주", description: "계절에 따른 별자리 변화와 내행성·외행성의 위치와 겉보기 운동 탐구", url: "./계절별 별자리, 내행성, 외행성 시뮬레이터.html", illustration: "orbits" },
+      { title: "동두천양주 밤하늘 관측 시뮬레이터", category: "우주", description: "우리 지역 기준의 밤하늘을 날짜·시간별로 관측", url: "https://parkyeonkyung00.github.io/sky/", illustration: "night" },
+      { title: "동두천고등학교 강현쌤과 함께하는 우주탐사", category: "우주", description: "행성을 골라 발사 속도를 조절하며 원궤도·타원 궤도·탈출 궤도를 비교하는 탈출속도·궤도운동 시뮬레이터", url: "https://dongducheon-space-lab.vercel.app/", illustration: "rocket" },
+      { title: "대기 안정도 & 구름 생성 시뮬레이터", category: "대기", description: "기온 감률과 단열 변화로 대기 안정도와 구름 생성 원리 탐구", url: "https://parkyeonkyung00.github.io/atmosphere2/", illustration: "cloud" },
+      { title: "2022 개정 교육과정 지구과학 데이터 탐구 프롬프트 워크시트", category: "탐구 자료", description: "2022 개정 교육과정 단원별 데이터 탐구 활동용 AI 프롬프트 워크시트", url: "https://raw.githack.com/parkyeonkyung00/earth-science-data-inquiry-worksheet/main/index.html", illustration: "worksheet" },
+      { title: "SciLab - 과학 학습 프로그램 플랫폼", category: "플랫폼", description: "과학 수업에 활용할 학습 프로그램을 만나는 플랫폼", url: "https://scilab-platform.vercel.app/", illustration: "earth" }
+    ];
+    const siteInfo = {
+      teachers: "박연경, 이강현, 김동규, 이우영",
+      contact: "",
+      contactLabel: "문의처 추가 예정"
+    };
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <style>
+    :root { color-scheme: light; --ink: #23364d; --muted: #596d80; --blue: #354b9a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: linear-gradient(180deg, #eaf5fd 0, #f5f9fc 420px, #fff 100%); font-family: Pretendard, "Malgun Gothic", sans-serif; font-size: 15px; line-height: 1.6; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    a { color: inherit; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #2469be; outline-offset: 5px; }
+    [hidden] { display: none !important; }
+    .terrain { position: absolute; top: 0; right: 0; width: min(650px, 75vw); height: 550px; color: #7daac0; opacity: .13; pointer-events: none; z-index: -1; }
+    .shell { width: min(1180px, calc(100% - 64px)); margin-inline: auto; }
+    .skip { position: absolute; top: -100px; left: 16px; z-index: 10; padding: 12px 20px; background: white; border-radius: 8px; }
+    .skip:focus { top: 12px; }
+    .header { padding-top: 18px; padding-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .eyebrow { display: flex; align-items: center; gap: 8px; margin: 0 0 5px; color: #52677c; font-size: 11px; font-weight: 700; letter-spacing: .12em; line-height: 1.3; }
+    .eyebrow::before { content: ""; width: 7px; height: 7px; background: #66a594; border-radius: 50%; }
+    h1 { font-size: clamp(23px, 2.5vw, 30px); letter-spacing: -.055em; line-height: 1.25; margin: 0 0 6px; font-weight: 800; }
+    .subtitle { margin: 0; font-size: 13px; color: #51677d; font-weight: 600; line-height: 1.5; }
+    .leadership { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 4px 0; font-size: 12px; color: #51677d; line-height: 1.5; }
+    .intro { margin: 5px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .header-art { width: 135px; height: 88px; flex: 0 0 auto; }
+    .toolbar { border-top: 1px solid #d9e5ee; padding: 15px 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 7px; }
+    .filter { border: 1px solid transparent; color: #52677c; background: transparent; min-height: 44px; padding: 8px 16px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 650; display: inline-flex; align-items: center; gap: 9px; }
+    .filter:hover { background: #e5edf5; }
+    .filter[aria-pressed="true"] { background: #273f66; color: #fff; box-shadow: 0 3px 9px #273f6615; }
+    .count { font-size: 11px; background: #dfe8f0; color: #53697e; border-radius: 6px; min-width: 19px; padding: 0 5px; line-height: 20px; }
+    .filter[aria-pressed="true"] .count { background: #ffffff25; color: white; }
+    .status { margin: 0; color: #617489; font-size: 12px; white-space: nowrap; }
+    .status strong { color: #2c4562; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .card { --accent: #3d50a0; --tint: #eef0fc; position: relative; display: flex; flex-direction: column; min-width: 0; text-decoration: none; background: white; border: 1px solid #e0e8ef; border-radius: 17px; overflow: hidden; box-shadow: 0 4px 16px #29405b06; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .card[data-category="대기"] { --accent: #16749a; --tint: #e8f6fc; }
+    .card[data-category="탐구 자료"] { --accent: #28795b; --tint: #eaf6ef; }
+    .card[data-category="플랫폼"] { --accent: #a15f31; --tint: #fcf1e6; }
+    @media (hover: hover) {
+      .card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 25px #29405b14; }
+      .card:hover .launch { background: var(--accent); color: white; }
+      .card:hover .arrow { transform: translateX(3px); }
+    }
+    .art { height: 105px; background: var(--tint); position: relative; overflow: hidden; border-bottom: 1px solid #23364d06; }
+    .art > svg { width: 100%; height: 100%; display: block; }
+    .art-label { position: absolute; left: 17px; bottom: 10px; font-size: 9px; font-weight: 700; letter-spacing: .14em; color: var(--accent); opacity: .75; }
+    .number { position: absolute; right: 16px; top: 10px; font-size: 11px; font-weight: 600; color: var(--accent); opacity: .55; }
+    .card-body { padding: 14px 17px 15px; display: flex; flex-direction: column; flex: 1; }
+    .heading-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    h2 { margin: 0; font-size: 16px; font-weight: 750; letter-spacing: -.035em; line-height: 1.45; flex: 1; overflow-wrap: anywhere; }
+    .tag { color: var(--accent); background: var(--tint); border-radius: 5px; padding: 2px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; margin-top: 2px; }
+    .description { font-size: 12px; line-height: 1.65; color: var(--muted); margin: 0 0 10px; flex: 1; }
+    .author { font-size: 11px; color: #687b8b; margin: 0 0 9px; }
+    .launch { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 8px 12px; border-radius: 8px; background: var(--tint); color: var(--accent); font-size: 12px; font-weight: 700; transition: background .18s ease, color .18s ease; }
+    .launch small { font-size: 10px; font-weight: 400; margin-left: auto; margin-right: 9px; opacity: .85; }
+    .arrow { font-size: 17px; line-height: 1; transition: transform .18s ease; }
+    .error { color: #a63325; background: #fff2ef; padding: 16px; border-radius: 12px; }
+    .footer { margin-top: 29px; border-top: 1px solid #dfe8ed; padding-top: 20px; padding-bottom: 26px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; font-size: 11px; color: #607486; }
+    .footer-title { margin: 0 0 6px; font-size: 13px; font-weight: 750; color: #3d566b; }
+    .footer p { margin: 3px 0; }
+    .footer-meta { text-align: right; }
+    .license { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; color: #477367; font-weight: 600; }
+    .strata { height: 19px; background: linear-gradient(to bottom, #bad3c4 0 4px, #dce3c4 4px 8px, #e8d3b1 8px 13px, #cdac90 13px 16px, #ac8d79 16px); clip-path: polygon(0 15%, 13% 35%, 28% 0, 43% 30%, 58% 10%, 74% 35%, 88% 0, 100% 20%, 100% 100%, 0 100%); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (min-width: 1000px) and (min-height: 850px) { .art { height: 119px; } .card-body { padding: 16px 19px; } }
+    @media (min-width: 1000px) and (max-height: 849px) { .art { height: 88px; } }
+    @media (max-width: 999px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .shell { width: calc(100% - 40px); } .header-art { width: 120px; } }
+    @media (max-width: 599px) {
+      .shell { width: calc(100% - 32px); }
+      .header { padding-top: 23px; padding-bottom: 20px; gap: 0; }
+      h1 { font-size: 25px; max-width: 310px; }
+      .header-art { display: none; }
+      .subtitle { font-size: 11px; }
+      .intro { font-size: 12px; }
+      .eyebrow { font-size: 10px; }
+      .toolbar { align-items: flex-start; flex-direction: column; gap: 9px; padding: 12px 0 15px; }
+      .filters { gap: 3px; width: 100%; }
+      .filter { padding: 8px 9px; gap: 5px; font-size: 12px; border-radius: 9px; }
+      .count { min-width: 16px; font-size: 10px; padding: 0 4px; }
+      .grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .art { height: 130px; }
+      .card-body { padding: 17px; }
+      h2 { font-size: 17px; }
+      .description { font-size: 13px; }
+      .launch { font-size: 13px; min-height: 48px; }
+      .footer { grid-template-columns: 1fr; gap: 13px; }
+      .footer-meta { text-align: left; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } .card:hover { transform: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#programs">프로그램 목록으로 건너뛰기</a>
+  <svg class="terrain" viewBox="0 0 650 550" fill="none" aria-hidden="true">
+    <g stroke="currentColor" stroke-width="1">
+      <path d="M650 20C510-30 520 100 390 60S270 190 400 200 500 350 650 280"/>
+      <path d="M650 40C530 0 530 120 405 85S300 175 420 180 520 320 650 260"/>
+      <path d="M650 60C550 30 545 140 425 110S335 160 440 160 550 290 650 240"/>
+      <path d="M650 80C580 65 565 155 455 135S420 145 470 145 575 260 650 220"/>
+      <path d="M650 330C550 275 500 420 385 330S160 330 245 430 470 400 520 520"/>
+      <path d="M650 350C555 300 500 440 380 355S190 345 270 420 465 420 495 535"/>
+      <path d="M650 370C560 325 500 465 375 380S220 360 295 410 450 440 470 550"/>
+      <path d="M650 390C565 350 500 490 370 405S250 380 320 405 435 465 445 550"/>
+    </g>
+  </svg>
+  <header class="shell header">
+    <div>
+      <p class="eyebrow">EARTH SCIENCE · CLASSROOM TO DISCOVERY</p>
+      <h1>(동두천양주교육연구회) AI 지구과학 탐구 연구회 결과 모음</h1>
+      <p class="leadership"><span><strong>회장</strong> 덕계고 박연경</span><span><strong>간사</strong> 덕정고 김현군</span></p>
+      <p class="subtitle">경기도동두천양주교육지원청 지구과학 교사 연구회</p>
+      <p class="intro">교실에서 시작하는 지구와 우주 탐구, 클릭 한 번으로 만나보세요.</p>
+    </div>
+    <svg class="header-art" viewBox="0 0 180 130" fill="none" aria-hidden="true">
+      <ellipse cx="91" cy="68" rx="77" ry="27" transform="rotate(-25 91 68)" stroke="#9ab4d5" stroke-dasharray="3 5"/>
+      <circle cx="91" cy="66" r="39" fill="#d5eaf8"/>
+      <circle cx="91" cy="66" r="32" fill="#81b9d4"/>
+      <path d="M66 47l17-10 9 7-4 11 12 8-7 12-12-2-4 15-9-10-8-16zM105 42l10 8 8 16-13 4-4-11-10-4zM103 82l12-5 3 10-12 8-7-4z" fill="#b8d6af"/>
+      <path d="M24 89c10 9 40 9 74-6 23-10 42-22 51-33" stroke="#5a76a3" stroke-width="1.5"/>
+      <circle cx="145" cy="49" r="5" fill="#e9b876"/>
+      <path d="M42 22v10m-5-5h10M146 99v8m-4-4h8" stroke="#8ba8c3" stroke-linecap="round"/>
+      <circle cx="29" cy="64" r="2" fill="#8ba8c3"/>
+    </svg>
+  </header>
+  <main class="shell" id="main">
+    <div class="toolbar">
+      <nav class="filters" id="filters" aria-label="프로그램 영역 필터"></nav>
+      <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+    </div>
+    <section class="grid" id="programs" aria-label="교육용 프로그램" tabindex="-1"></section>
+    <p class="error" id="error" role="alert" hidden></p>
+    <noscript><p class="error">프로그램 목록을 보려면 브라우저에서 JavaScript를 허용해 주세요.</p></noscript>
+  </main>
+  <footer class="shell footer">
+    <div>
+      <p class="footer-title">함께 만들고, 함께 탐구하는 지구과학</p>
+      <p>동두천·양주 지역 중·고등학교 지구과학 교사들이 수업을 위해 만든 공간입니다.<br>시뮬레이션과 데이터 탐구로 학생들의 질문이 발견으로 이어지길 바랍니다.</p>
+      <span class="license"><span aria-hidden="true">✓</span> 교육 목적 자유 이용 · 각 프로그램의 이용 조건을 함께 확인해 주세요.</span>
+    </div>
+    <div class="footer-meta">
+      <p><strong>제작 참여교사</strong> · <span id="teachers"></span></p>
+      <p><strong>문의</strong> · <span id="contact"></span></p>
+      <p>모든 프로그램은 새 탭에서 열립니다.</p>
+    </div>
+  </footer>
+  <div class="strata" aria-hidden="true"></div>
+  <script>
+    const artwork = {
+      orbits: `<g fill="none" stroke="#a8b3dc"><ellipse cx="203" cy="55" rx="51" ry="19" transform="rotate(-15 203 55)"/><ellipse cx="203" cy="55" rx="91" ry="34" transform="rotate(-15 203 55)"/><ellipse cx="203" cy="55" rx="133" ry="47" transform="rotate(-15 203 55)" stroke-dasharray="3 4"/></g><circle cx="203" cy="55" r="13" fill="#edbe72"/><circle cx="247" cy="38" r="6" fill="#8f9bd0"/><circle cx="126" cy="72" r="8" fill="#6f9fca"/><circle cx="311" cy="20" r="6" fill="#c19c95"/><path d="M47 29l22-10 18 19 23-7M69 19l4 32" stroke="#8799c9" fill="none"/><g fill="#687fba"><circle cx="47" cy="29" r="2.5"/><circle cx="69" cy="19" r="3"/><circle cx="87" cy="38" r="2.5"/><circle cx="110" cy="31" r="2"/><circle cx="73" cy="51" r="2"/><circle cx="336" cy="75" r="2"/></g>`,
+      night: `<path d="M0 87Q65 60 125 82T250 76T380 78V120H0Z" fill="#d3dbef"/><path d="M0 101Q85 74 165 95T380 86V120H0Z" fill="#aabbd8"/><path d="M30 60Q190 3 349 60" stroke="#c5cee6" stroke-dasharray="3 5" fill="none"/><path d="M135 34l28-13 27 15 36-10 20 22" stroke="#8b9bc4" fill="none"/><g fill="#637ab0"><circle cx="135" cy="34" r="2.5"/><circle cx="163" cy="21" r="3"/><circle cx="190" cy="36" r="2.5"/><circle cx="226" cy="26" r="3"/><circle cx="246" cy="48" r="2.5"/><circle cx="72" cy="24" r="1.5"/><circle cx="294" cy="21" r="2"/></g><path d="M307 40a13 13 0 0 0 16 17 15 15 0 1 1-16-17" fill="#e5bc7c"/><path d="M265 81l-5-18h11l-5 18m-1-1-10 18m11-18 10 18" stroke="#536c96" stroke-width="2" fill="none"/><text x="24" y="19" fill="#8e9fc1" font-size="8" font-family="sans-serif">37.9° N · 127.1° E</text>`,
+      rocket: `<ellipse cx="198" cy="69" rx="111" ry="29" transform="rotate(-21 198 69)" fill="none" stroke="#a6b4d8" stroke-dasharray="4 4"/><path d="M155 85Q199 57 279 15" fill="none" stroke="#d8a568" stroke-width="2"/><circle cx="151" cy="87" r="37" fill="#98afcd"/><path d="M119 72q15-7 26 7t37 7M123 102q16-7 34 5" stroke="#c3d4e5" stroke-width="8" fill="none"/><g transform="translate(253 31) rotate(50)"><path d="M-7 11Q-11-9 0-22 11-9 7 11Z" fill="#fff" stroke="#7d8bb3" stroke-width="1.3"/><circle cy="-6" r="3.5" fill="#9ebce0"/><path d="M-7 2l-7 12 8-3M7 2l7 12-8-3" fill="#8e9dcb"/><path d="M-3 13l3 11 3-11" fill="#e8b368"/></g><g fill="#8fa0c6"><circle cx="80" cy="29" r="2"/><circle cx="318" cy="64" r="2"/><circle cx="208" cy="18" r="1.5"/></g>`,
+      cloud: `<g stroke="#c4e1ed" stroke-width="1"><path d="M230 15v77h112M230 36h112M230 57h112M230 78h112"/><path d="M258 15v77M286 15v77M314 15v77"/></g><path d="M244 87l25-21 9-24 36-25" fill="none" stroke="#55a1bd" stroke-width="2.5"/><path d="M245 87l20-26 24-25 11-19" fill="none" stroke="#d7a67d" stroke-width="2" stroke-dasharray="4 3"/><path d="M83 62a18 18 0 0 1 0-36 26 26 0 0 1 48-4 20 20 0 0 1 27 23 13 13 0 0 1-2 25H83Z" fill="#fff" stroke="#bfdfeb" stroke-width="1.5"/><path d="M101 96V78m-5 6 5-7 5 7M128 97V79m-5 6 5-7 5 7" stroke="#70b0c9" stroke-width="2" fill="none"/><path d="M38 101q65-12 135 0" stroke="#b1d4df" fill="none"/><text x="329" y="104" font-family="sans-serif" font-size="9" fill="#6594a8">T →</text>`,
+      worksheet: `<g transform="rotate(-8 148 57)"><rect x="104" y="12" width="87" height="94" rx="7" fill="#d2e8d9"/><rect x="97" y="7" width="87" height="94" rx="7" fill="#fff" stroke="#b5d6c2"/><path d="M111 24h34M111 34h58M111 43h47" stroke="#b2ccbd" stroke-width="3" stroke-linecap="round"/><path d="M112 81V56m0 25h54" fill="none" stroke="#a2c4b1"/><path d="M116 75l13-9 11 5 19-18" fill="none" stroke="#5b9b79" stroke-width="2.5"/></g><rect x="213" y="29" width="87" height="65" rx="7" fill="#f8fcf9" stroke="#b5d6c2"/><path d="M229 78V47m0 31h55" stroke="#c4dccd"/><path d="M239 77V63m15 14V54m15 23V43" stroke="#81b398" stroke-width="9"/><circle cx="299" cy="26" r="13" fill="#d4e9dc"/><path d="M294 26l4 4 7-8" stroke="#5b9677" stroke-width="2" fill="none"/>`,
+      earth: `<circle cx="198" cy="57" r="47" fill="#b2c8b5"/><path d="M156 37l19-15 10 9-4 15 11 7-9 12-19-6zM204 15l17 9 12 17-16-2-7-11zM168 81l19-3 6 17-13 4z" fill="#d7e1bf"/><path d="M198 57l47-27a54 54 0 0 1-47 81Z" fill="#cf9a6c" stroke="#fff4e8" stroke-width="2"/><path d="M198 57l37-21a43 43 0 0 1-37 64Z" fill="#e4b47b"/><path d="M198 57l26-15a30 30 0 0 1-26 45Z" fill="#d78758"/><path d="M198 57l14-8a16 16 0 0 1-14 24Z" fill="#f4d397"/><g stroke="#c6ad93" fill="none"><path d="M242 43h44l10-9M238 73h47M218 95h50l9 7"/></g><g fill="#bf9c7b"><circle cx="297" cy="33" r="2"/><circle cx="287" cy="73" r="2"/><circle cx="278" cy="103" r="2"/></g>`
+    };
+    const categoryArt = { "우주": "orbits", "대기": "cloud", "탐구 자료": "worksheet", "플랫폼": "earth" };
+    const artLabels = { orbits: "ORBITS & CONSTELLATIONS", night: "OUR LOCAL NIGHT SKY", rocket: "MISSION TO SPACE", cloud: "ATMOSPHERE & CLOUDS", worksheet: "DATA TO DISCOVERY", earth: "EXPLORE SCIENCE" };
+    const categories = ["전체", "우주", "대기", "탐구 자료", "플랫폼", ...new Set(programs.map(p => p.category).filter(c => !["우주", "대기", "탐구 자료", "플랫폼"].includes(c)))];
+    const grid = document.getElementById("programs");
+    const filters = document.getElementById("filters");
+    const status = document.getElementById("status");
+
+    function createElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function validatedUrl(value) {
+      const url = new URL(value, document.baseURI);
+      if (!["https:", "http:", "file:"].includes(url.protocol)) throw new Error("지원하지 않는 링크 형식입니다.");
+      return url.href;
+    }
+
+    function createCard(program, index) {
+      if (!program.title || !program.category || !program.description || !program.url) {
+        throw new Error(`${index + 1}번 프로그램의 제목, 영역, 설명 또는 URL이 비어 있습니다.`);
+      }
+      const card = createElement("a", "card");
+      card.href = validatedUrl(program.url);
+      card.target = "_blank";
+      card.rel = "noopener noreferrer";
+      card.dataset.category = program.category;
+      const artKey = Object.hasOwn(artwork, program.illustration) ? program.illustration : (categoryArt[program.category] || "earth");
+      const art = createElement("div", "art");
+      art.setAttribute("aria-hidden", "true");
+      // SVG는 위의 고정된 도안만 사용하고, 프로그램의 텍스트는 textContent로 출력합니다.
+      art.innerHTML = `<svg viewBox="0 0 380 120" fill="none" xmlns="http://www.w3.org/2000/svg">${artwork[artKey]}</svg>`;
+      art.append(createElement("span", "art-label", artLabels[artKey]), createElement("span", "number", String(index + 1).padStart(2, "0")));
+      const body = createElement("div", "card-body");
+      const heading = createElement("div", "heading-row");
+      heading.append(createElement("h2", "", program.title), createElement("span", "tag", program.category));
+      body.append(heading, createElement("p", "description", program.description));
+      if (program.author || program.school) {
+        body.append(createElement("p", "author", program.author && program.school ? `${program.author}(${program.school})` : (program.author || program.school)));
+      }
+      const launch = createElement("span", "launch", "바로 실행");
+      const arrow = createElement("span", "arrow", "→");
+      arrow.setAttribute("aria-hidden", "true");
+      launch.append(createElement("small", "", "새 탭 열기"), arrow);
+      body.append(launch);
+      card.append(art, body);
+      return card;
+    }
+
+    function selectCategory(category) {
+      for (const button of filters.children) button.setAttribute("aria-pressed", String(button.dataset.category === category));
+      let visible = 0;
+      for (const card of grid.children) {
+        card.hidden = category !== "전체" && card.dataset.category !== category;
+        if (!card.hidden) visible++;
+      }
+      status.replaceChildren(document.createTextNode(`${category} · `), createElement("strong", "", `${visible}개`), document.createTextNode(" 프로그램"));
+    }
+
+    try {
+      const cards = programs.map(createCard);
+      grid.append(...cards);
+      for (const category of categories) {
+        const button = createElement("button", "filter", category);
+        button.type = "button";
+        button.dataset.category = category;
+        button.setAttribute("aria-controls", "programs");
+        button.append(createElement("span", "count", String(category === "전체" ? programs.length : programs.filter(p => p.category === category).length)));
+        button.addEventListener("click", () => selectCategory(category));
+        filters.append(button);
+      }
+      selectCategory("전체");
+      document.getElementById("teachers").textContent = siteInfo.teachers;
+      const contact = document.getElementById("contact");
+      if (siteInfo.contact) {
+        const link = createElement("a", "", siteInfo.contactLabel);
+        link.href = `mailto:${siteInfo.contact}`;
+        contact.append(link);
+      } else {
+        contact.textContent = siteInfo.contactLabel;
+      }
+    } catch (error) {
+      console.error("홈페이지 초기화 실패:", error);
+      const notice = document.getElementById("error");
+      notice.textContent = `프로그램 목록을 불러오지 못했습니다. 설정을 확인해 주세요. ${error.message}`;
+      notice.hidden = false;
+    }
+  </script>
+</body>
+</html>
