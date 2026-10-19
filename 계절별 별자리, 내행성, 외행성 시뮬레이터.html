@@ -1,0 +1,619 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>계절별 별자리 시뮬레이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* 레이아웃: 상단 공용 날짜 막대 → 탭 3개 → 왼쪽 위에서 본 태양계, 오른쪽 관측 정보. 천체투영관 느낌의 단일 어두운 테마 */
+:root{
+  --bg:#0a0f24; --panel:#111836; --panel2:#0d1430; --line:#26305c; --fg:#e9edff; --muted:#9ba6d4;
+  --sun:#ffbf47; --earth:#5aa8ff; --vis:#8ff0cf;
+  --f-display:'Gowun Batang','Nanum Myeongjo',serif;
+  --f-body:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.6;padding:24px 16px 48px}
+.wrap{max-width:1200px;margin:0 auto;display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,4vw,36px);margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:66ch}
+
+.datebar{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:12px}
+.datebar .top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.datebar strong{font-family:var(--f-display);font-size:28px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pick input{width:88px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+button,select,input[type=number]{font:inherit;font-size:14px;color:var(--fg);background:#1a2350;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+button{cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--vis);outline-offset:2px}
+button[aria-pressed=true]{background:var(--fg);color:#0a0f24;border-color:var(--fg);font-weight:600}
+#play{background:var(--sun);color:#1b1300;border-color:var(--sun);font-weight:600;min-width:92px}
+.chip{font-size:13px;padding:1px 10px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 16px;font-size:16px;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--sun);font-weight:600}
+
+.main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.main{grid-template-columns:1fr}}
+.space{width:100%;max-width:660px;aspect-ratio:1;margin:0 auto}
+.space canvas{width:100%;height:100%;display:block;touch-action:none}
+#c-seasons{cursor:grab}
+.side{display:grid;gap:14px;min-width:0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.label{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin:6px 0 0}
+.wide canvas{width:100%;display:block;border-radius:8px}
+.sky canvas{aspect-ratio:2.2}
+.path canvas{aspect-ratio:2.4}
+.now{margin:12px 0 0;font-size:14.5px}
+.sub{color:var(--muted);font-size:13.5px;margin:6px 0 0}
+
+.status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+.status h2{font-family:var(--f-display);font-size:24px;margin:0;line-height:1.3}
+.status p{margin:4px 0 0;font-size:14.5px}
+.phase{text-align:center;font-size:12px;color:var(--muted)}
+.phase canvas{width:96px;height:96px;display:block;margin:0 auto 2px}
+dl.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:12px 0 0;font-size:14px}
+dl.facts dt{color:var(--muted)}
+dl.facts dd{margin:0;font-variant-numeric:tabular-nums}
+.syn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center}
+.syn div{background:var(--panel2);border-radius:8px;padding:8px 4px}
+.syn b{display:block;font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums}
+.syn span{font-size:12px;color:var(--muted)}
+.formula{font-size:13.5px;color:var(--muted);margin:10px 0 0}
+ul.events{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ul.events li{display:grid;grid-template-columns:7.5em minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
+ul.events li button{padding:3px 10px;font-size:13px}
+
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.ideas div{border-top:2px solid var(--line);padding-top:10px}
+.ideas h3{font-family:var(--f-display);font-size:18px;margin:0 0 4px}
+.ideas p{margin:0;color:var(--muted);font-size:14px;max-width:60ch}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>계절별 별자리와 행성의 움직임</h1>
+    <p>북쪽 하늘 높은 곳에서 태양계를 내려다본 모습입니다. 날짜를 바꾸거나 ▶ 버튼을 눌러 보세요. 세 탭이 같은 날짜를 함께 씁니다. 행성 위치는 NASA JPL 궤도요소로 계산했습니다(1900~2050년).</p>
+  </header>
+
+  <div class="datebar">
+    <div class="top">
+      <strong id="dateText">2026년 10월 8일</strong>
+      <span id="seasonChip" class="chip">가을</span>
+      <div class="pick">
+        <input id="yy" type="number" min="1900" max="2050" aria-label="연도"> <span>년</span>
+        <select id="mm" aria-label="월"></select>
+        <select id="dd" aria-label="일"></select>
+        <button id="today" type="button">오늘</button>
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" data-step="-365">−1년</button>
+      <button type="button" data-step="-30">−1달</button>
+      <button type="button" data-step="-1">−1일</button>
+      <button type="button" data-step="1">+1일</button>
+      <button type="button" data-step="30">+1달</button>
+      <button type="button" data-step="365">+1년</button>
+      <span style="width:8px"></span>
+      <button id="play" type="button">▶ 재생</button>
+      <select id="speed" aria-label="재생 속도">
+        <option value="2">하루씩</option>
+        <option value="10">느리게</option>
+        <option value="30" selected>보통</option>
+        <option value="90">빠르게</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="t-seasons" aria-selected="true" data-tab="seasons">계절별 별자리</button>
+    <button role="tab" id="t-inner" aria-selected="false" data-tab="inner">내행성 (수성·금성)</button>
+    <button role="tab" id="t-outer" aria-selected="false" data-tab="outer">외행성 (화성·목성·토성)</button>
+  </div>
+
+  <!-- 계절 탭 -->
+  <section id="p-seasons" role="tabpanel" aria-labelledby="t-seasons" class="wrap">
+    <div class="main">
+      <div>
+        <div class="space"><canvas id="c-seasons" aria-label="태양, 지구 공전 궤도, 바깥쪽 별자리를 위에서 본 그림"></canvas></div>
+        <p class="hint">지구(파란 점)를 끌어서 같은 해 안의 날짜를 바꿀 수 있어요.</p>
+      </div>
+      <div class="side">
+        <div class="box">
+          <p class="label">계절 바로가기 (올해)</p>
+          <div class="row">
+            <button type="button" data-md="4-15">봄 4월</button>
+            <button type="button" data-md="7-15">여름 7월</button>
+            <button type="button" data-md="10-15">가을 10월</button>
+            <button type="button" data-md="1-15">겨울 1월</button>
+          </div>
+        </div>
+        <div class="box wide sky">
+          <p class="label">이날 자정, 남쪽 하늘</p>
+          <canvas id="c-sky" aria-label="남쪽을 바라본 밤하늘"></canvas>
+          <p class="now" id="nowText"></p>
+          <p class="sub" id="hiddenText"></p>
+        </div>
+      </div>
+    </div>
+    <div class="box ideas">
+      <div><h3>① 별자리는 제자리</h3><p>별자리는 태양계보다 엄청나게 멀리 있어서 1년 동안 거의 움직이지 않아요. 움직이는 것은 지구입니다.</p></div>
+      <div><h3>② 밤 = 태양 반대쪽</h3><p>밤에는 지구의 그림자 쪽에 서 있으니 태양 반대 방향의 하늘만 보입니다. 태양 쪽 별자리는 낮 하늘에 떠 있어 햇빛에 가려져요.</p></div>
+      <div><h3>③ 공전하면 방향이 바뀜</h3><p>지구가 태양 둘레를 돌면 ‘태양 반대쪽’이 가리키는 별자리가 조금씩 바뀝니다. 그래서 계절마다 다른 별자리가 보이고, 6개월 뒤에는 정반대 별자리가 보여요.</p></div>
+    </div>
+  </section>
+
+  <!-- 내행성 탭 -->
+  <section id="p-inner" role="tabpanel" aria-labelledby="t-inner" class="wrap" hidden>
+    <div class="main">
+      <div>
+        <div class="space"><canvas id="c-inner" aria-label="수성, 금성, 지구의 궤도를 실제 비율로 그린 그림"></canvas></div>
+        <p class="hint">거리 비율이 실제와 같습니다. 바깥 띠는 황도 13별자리입니다.</p>
+      </div>
+      <div class="side">
+        <div class="box">
+          <div class="row" style="margin-bottom:12px">
+            <button type="button" data-inner="mercury" aria-pressed="false">수성</button>
+            <button type="button" data-inner="venus" aria-pressed="true">금성</button>
+          </div>
+          <div class="status">
+            <div><h2 id="in-head"></h2><p id="in-vis"></p></div>
+            <div class="phase"><canvas id="in-phase" width="192" height="192"></canvas><span id="in-phasetxt"></span></div>
+          </div>
+          <dl class="facts" id="in-facts"></dl>
+        </div>
+        <div class="box">
+          <p class="label">회합주기</p>
+          <div class="syn" id="in-syn"></div>
+          <p class="formula" id="in-formula"></p>
+        </div>
+        <div class="box">
+          <p class="label">다가오는 현상</p>
+          <ul class="events" id="in-events"></ul>
+        </div>
+        <div class="box wide path">
+          <p class="label" id="in-pathlabel">하늘에서 지나간 길</p>
+          <canvas id="in-path" aria-label="행성이 별자리 사이로 움직인 경로"></canvas>
+          <p class="sub">왼쪽이 동쪽입니다. 점 간격은 3일, 위아래(황위)는 크게 늘려 그렸어요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="box ideas">
+      <div><h3>① 태양 곁을 못 떠남</h3><p>내행성은 지구 궤도 안쪽에 있어서 지구에서 보면 태양과 일정 각도 이상 멀어지지 못해요. 수성은 약 28°, 금성은 약 47°가 한계라 한밤중에는 보이지 않습니다.</p></div>
+      <div><h3>② 저녁 또는 새벽</h3><p>태양의 동쪽에 있으면(동방이각) 해 진 뒤 서쪽 하늘에, 서쪽에 있으면(서방이각) 해 뜨기 전 동쪽 하늘에 보여요. 금성의 ‘개밥바라기’와 ‘샛별’이 이것입니다.</p></div>
+      <div><h3>③ 앞지르는 데 걸리는 시간</h3><p>안쪽 행성이 지구보다 빨리 돌기 때문에 지구를 한 바퀴 앞질러야 다시 같은 배치가 됩니다. 이 시간이 회합주기예요.</p></div>
+    </div>
+  </section>
+
+  <!-- 외행성 탭 -->
+  <section id="p-outer" role="tabpanel" aria-labelledby="t-outer" class="wrap" hidden>
+    <div class="main">
+      <div>
+        <div class="space"><canvas id="c-outer" aria-label="외행성과 지구의 궤도를 실제 비율로 그린 그림"></canvas></div>
+        <p class="hint">고른 행성에 맞춰 화면 크기가 바뀌지만, 거리 비율은 늘 실제와 같습니다.</p>
+      </div>
+      <div class="side">
+        <div class="box">
+          <div class="row" style="margin-bottom:12px">
+            <button type="button" data-outer="mars" aria-pressed="true">화성</button>
+            <button type="button" data-outer="jupiter" aria-pressed="false">목성</button>
+            <button type="button" data-outer="saturn" aria-pressed="false">토성</button>
+          </div>
+          <div class="status">
+            <div><h2 id="out-head"></h2><p id="out-vis"></p></div>
+            <div class="phase"><canvas id="out-phase" width="192" height="192"></canvas><span id="out-phasetxt"></span></div>
+          </div>
+          <dl class="facts" id="out-facts"></dl>
+        </div>
+        <div class="box">
+          <p class="label">회합주기</p>
+          <div class="syn" id="out-syn"></div>
+          <p class="formula" id="out-formula"></p>
+        </div>
+        <div class="box">
+          <p class="label">다가오는 현상</p>
+          <ul class="events" id="out-events"></ul>
+        </div>
+        <div class="box wide path">
+          <p class="label">하늘에서 지나간 길 (앞뒤 120일)</p>
+          <canvas id="out-path" aria-label="행성이 별자리 사이로 움직인 경로"></canvas>
+          <p class="sub">왼쪽이 동쪽입니다. 오른쪽(서쪽)으로 거꾸로 가는 구간이 역행이에요. 점 간격은 3일, 위아래(황위)는 크게 늘려 그렸어요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="box ideas">
+      <div><h3>① 충 = 가장 잘 보일 때</h3><p>지구가 태양과 외행성 사이에 오면(충) 행성이 한밤중 남쪽 하늘 높이 뜨고, 지구와 가장 가까워 가장 밝고 크게 보여요.</p></div>
+      <div><h3>② 역행은 추월의 결과</h3><p>안쪽의 지구가 더 빨리 돌며 외행성을 따라잡아 지나갈 때, 행성이 별자리 사이에서 뒤로 가는 것처럼 보입니다. 그래서 역행은 늘 충 무렵에 일어나요.</p></div>
+      <div><h3>③ 멀수록 1년에 가까워짐</h3><p>멀리 있는 행성일수록 거의 제자리라서 지구가 한 바퀴 돌고 조금만 더 가면 다시 따라잡아요. 토성의 회합주기가 약 378일인 이유입니다.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const DEG=Math.PI/180, FONT="'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+const $=id=>document.getElementById(id);
+const wrap=d=>((d%360)+540)%360-180;
+const norm=d=>((d%360)+360)%360;
+
+/* ---------- 행성 궤도요소 (JPL, Standish: 1800–2050년용) ---------- */
+const EL={
+ mercury:{n:'수성',c:'#cdbca9',D:4879, e0:[0.38709927,0.20563593,7.00497902,252.25032350,77.45779628,48.33076593],r:[0.00000037,0.00001906,-0.00594749,149472.67411175,0.16047689,-0.12534081]},
+ venus:{n:'금성',c:'#ffe0a0',D:12104, e0:[0.72333566,0.00677672,3.39467605,181.97909950,131.60246718,76.67984255],r:[0.00000390,-0.00004107,-0.00078890,58517.81538729,0.00268329,-0.27769418]},
+ earth:{n:'지구',c:'#5aa8ff',D:12742, e0:[1.00000261,0.01671123,-0.00001531,100.46457166,102.93768193,0],r:[0.00000562,-0.00004392,-0.01294668,35999.37244981,0.32327364,0]},
+ mars:{n:'화성',c:'#ff7a59',D:6779, e0:[1.52371034,0.09339410,1.84969142,-4.55343205,-23.94362959,49.55953891],r:[0.00001847,0.00007882,-0.00813131,19140.30268499,0.44441088,-0.29257343]},
+ jupiter:{n:'목성',c:'#e8c08f',D:139820, e0:[5.20288700,0.04838624,1.30439695,34.39644051,14.72847983,100.47390909],r:[-0.00011607,-0.00013253,-0.00183714,3034.74612775,0.21252668,0.20469106]},
+ saturn:{n:'토성',c:'#f1d78a',D:116460, e0:[9.53667594,0.05386179,2.48599187,49.95424423,92.59887831,113.66242448],r:[-0.00125060,-0.00050991,0.00193609,1222.49362201,-0.41897216,-0.28867794]}
+};
+for(const k in EL){EL[k].P=36525*360/EL[k].r[3]}
+function elems(k,jd){const T=(jd-2451545)/36525,p=EL[k];return p.e0.map((v,i)=>v+p.r[i]*T)}
+function posFrom(el,Mdeg){
+  const [a,e,I,L,w,O]=el; const om=(w-O)*DEG, Om=O*DEG, i=I*DEG;
+  let M=(Mdeg===undefined?norm(L-w):Mdeg)*DEG; if(M>Math.PI)M-=2*Math.PI;
+  let E=M+e*Math.sin(M); for(let n=0;n<8;n++)E-= (E-e*Math.sin(E)-M)/(1-e*Math.cos(E));
+  const xp=a*(Math.cos(E)-e), yp=a*Math.sqrt(1-e*e)*Math.sin(E);
+  const co=Math.cos(om),so=Math.sin(om),cO=Math.cos(Om),sO=Math.sin(Om),cI=Math.cos(i),sI=Math.sin(i);
+  return [(co*cO-so*sO*cI)*xp+(-so*cO-co*sO*cI)*yp,(co*sO+so*cO*cI)*xp+(-so*sO+co*cO*cI)*yp,(so*sI)*xp+(co*sI)*yp];
+}
+const helio=(k,jd)=>posFrom(elems(k,jd));
+function geo(k,jd){
+  const p=helio(k,jd), e=helio('earth',jd);
+  const x=p[0]-e[0],y=p[1]-e[1],z=p[2]-e[2], dist=Math.hypot(x,y,z);
+  const lam=norm(Math.atan2(y,x)/DEG), beta=Math.atan2(z,Math.hypot(x,y))/DEG;
+  const sunLam=norm(Math.atan2(-e[1],-e[0])/DEG);
+  return {p,e,lam,beta,dist,r:Math.hypot(...p),R:Math.hypot(...e),E:wrap(lam-sunLam),sunLam};
+}
+const earthLon=jd=>{const e=helio('earth',jd);return norm(Math.atan2(e[1],e[0])/DEG)};
+
+/* ---------- 황도 13별자리 (J2000 황경 경계, 근사) ---------- */
+const ZOD=[['물고기',351.6,28.7],['양',28.7,53.4],['황소',53.4,90.1],['쌍둥이',90.1,118.0],['게',118.0,138.0],['사자',138.0,173.9],['처녀',173.9,218.0],['천칭',218.0,241.0],['전갈',241.0,247.7],['뱀주인',247.7,266.3],['궁수',266.3,299.7],['염소',299.7,327.9],['물병',327.9,351.6]];
+function zodiacOf(l){for(const z of ZOD){const s=z[1],e=z[2];if(s<e?(l>=s&&l<e):(l>=s||l<e))return z[0]+'자리'}return ''}
+
+/* ---------- 계절 탭 별자리 ---------- */
+const COLORS={봄:'#ff9cc6',여름:'#7fe39f',가을:'#ffb06a',겨울:'#8fc6ff'};
+const CONS=[
+  {n:'황소자리',a:66,s:'겨울'},{n:'오리온자리',a:84,s:'겨울'},{n:'쌍둥이자리',a:110,s:'겨울'},
+  {n:'사자자리',a:155,s:'봄'},{n:'처녀자리',a:195,s:'봄'},{n:'목동자리',a:218,s:'봄'},
+  {n:'전갈자리',a:250,s:'여름'},{n:'거문고자리',a:281,s:'여름'},{n:'백조자리',a:310,s:'여름'},
+  {n:'페가수스자리',a:340,s:'가을'},{n:'안드로메다자리',a:10,s:'가을'},{n:'양자리',a:36,s:'가을'}
+];
+const SEASON_LABEL=[{n:'겨울철 별자리',k:'겨울',a:88},{n:'봄철 별자리',k:'봄',a:186},{n:'여름철 별자리',k:'여름',a:280},{n:'가을철 별자리',k:'가을',a:8}];
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+CONS.forEach(c=>{const r=rng(hash(c.n));c.stars=[];const k=5+Math.floor(r()*3);for(let i=0;i<k;i++)c.stars.push([r()*2-1,r()*2-1,0.6+r()*0.9])});
+const BG=(()=>{const r=rng(7);const a=[];for(let i=0;i<220;i++)a.push([r(),r(),r()*1.1+0.2,r()]);return a})();
+
+/* ---------- 날짜 ---------- */
+const JD_MIN=2415020.5, JD_MAX=2469807.5; // 1900-01-01 ~ 2050-12-31
+const toJD=(y,m,d)=>Date.UTC(y,m-1,d,12)/86400000+2440587.5;
+function fromJD(jd){const t=new Date((Math.floor(jd-0.5)+0.5+0.5-2440587.5)*86400000);return {y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate()}}
+const fmt=jd=>{const {y,m,d}=fromJD(jd);return `${y}. ${m}. ${d}.`};
+const seasonOf=m=>m>=3&&m<=5?'봄':m>=6&&m<=8?'여름':m>=9&&m<=11?'가을':'겨울';
+const now=new Date();
+let jd=toJD(now.getFullYear(),now.getMonth()+1,now.getDate());
+let tab='seasons', innerK='venus', outerK='mars', playing=false, last=0;
+
+const yy=$('yy'),mm=$('mm'),dd=$('dd');
+for(let m=1;m<=12;m++)mm.add(new Option(m+'월',m));
+function syncPicker(){
+  const {y,m,d}=fromJD(jd);
+  if(document.activeElement!==yy)yy.value=y; mm.value=m;
+  const n=new Date(Date.UTC(y,m,0)).getUTCDate();
+  if(dd.options.length!==n){dd.innerHTML='';for(let i=1;i<=n;i++)dd.add(new Option(i+'일',i))}
+  dd.value=d;
+  $('dateText').textContent=`${y}년 ${m}월 ${d}일`;
+  const s=seasonOf(m),chip=$('seasonChip');chip.textContent=s;chip.style.color=COLORS[s];
+}
+function setJD(v){jd=Math.min(JD_MAX,Math.max(JD_MIN,v));update()}
+function fromPicker(){let y=+yy.value||2026;y=Math.min(2050,Math.max(1900,y));const m=+mm.value,n=new Date(Date.UTC(y,m,0)).getUTCDate();setJD(toJD(y,m,Math.min(+dd.value,n)))}
+yy.addEventListener('change',fromPicker);mm.addEventListener('change',fromPicker);dd.addEventListener('change',fromPicker);
+$('today').addEventListener('click',()=>{const t=new Date();setJD(toJD(t.getFullYear(),t.getMonth()+1,t.getDate()))});
+document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>{
+  const s=+b.dataset.step,{y,m,d}=fromJD(jd);
+  if(Math.abs(s)===365)setJD(toJD(y+Math.sign(s),m,Math.min(d,new Date(Date.UTC(y+Math.sign(s),m,0)).getUTCDate())));
+  else if(Math.abs(s)===30){const t=new Date(Date.UTC(y,m-1+Math.sign(s),1));const n=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();setJD(toJD(t.getUTCFullYear(),t.getUTCMonth()+1,Math.min(d,n)))}
+  else setJD(jd+s);
+}));
+document.querySelectorAll('[data-md]').forEach(b=>b.addEventListener('click',()=>{const [m,d]=b.dataset.md.split('-').map(Number);setJD(toJD(fromJD(jd).y,m,d))}));
+$('play').addEventListener('click',()=>{playing=!playing;$('play').textContent=playing?'❚❚ 멈춤':'▶ 재생';last=performance.now();if(playing)requestAnimationFrame(tick)});
+function tick(t){if(!playing)return;const dt=Math.min((t-last)/1000,.1);last=t;jd+=dt*+$('speed').value;if(jd>=JD_MAX){jd=JD_MAX;playing=false;$('play').textContent='▶ 재생'}update();if(playing)requestAnimationFrame(tick)}
+
+/* ---------- 탭 ---------- */
+function showTab(t){tab=t;document.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  ['seasons','inner','outer'].forEach(k=>$('p-'+k).hidden=k!==t);update()}
+document.querySelectorAll('[role=tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+document.querySelectorAll('[data-inner]').forEach(b=>b.addEventListener('click',()=>{innerK=b.dataset.inner;document.querySelectorAll('[data-inner]').forEach(x=>x.setAttribute('aria-pressed',x===b));update()}));
+document.querySelectorAll('[data-outer]').forEach(b=>b.addEventListener('click',()=>{outerK=b.dataset.outer;document.querySelectorAll('[data-outer]').forEach(x=>x.setAttribute('aria-pressed',x===b));update()}));
+
+/* ---------- 공용 그리기 ---------- */
+function fit(c){const r=c.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);const w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(c.width!==w||c.height!==h){c.width=w;c.height=h}return c.getContext('2d')}
+function stars(ctx,W,H,u,alpha){for(const [x,y,s,t] of BG){ctx.fillStyle=`rgba(200,210,255,${(0.15+t*0.35)*alpha})`;ctx.beginPath();ctx.arc(x*W,y*H,s*u,0,Math.PI*2);ctx.fill()}}
+function cluster(ctx,x,y,size,c,alpha,glow){
+  ctx.save();ctx.globalAlpha=alpha;if(glow){ctx.shadowColor=COLORS[c.s];ctx.shadowBlur=size*1.4}
+  ctx.fillStyle=glow?'#ffffff':COLORS[c.s];
+  for(const [dx,dy,m] of c.stars){ctx.beginPath();ctx.arc(x+dx*size,y+dy*size,m*size*0.14,0,Math.PI*2);ctx.fill()}
+  ctx.restore();
+}
+function sunGlow(ctx,cx,cy,u,label){
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,40*u);g.addColorStop(0,'rgba(255,214,120,1)');g.addColorStop(.35,'rgba(255,191,71,.9)');g.addColorStop(1,'rgba(255,191,71,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,40*u,0,Math.PI*2);ctx.fill();
+  if(label){ctx.fillStyle='#2a1a00';ctx.font=`700 ${11*u}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('태양',cx,cy)}
+}
+function arrow(ctx,x1,y1,x2,y2,u,color,dash){
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.8*u;ctx.setLineDash(dash?[6*u,5*u]:[]);
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);
+  const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-9*u*Math.cos(a-.4),y2-9*u*Math.sin(a-.4));ctx.lineTo(x2-9*u*Math.cos(a+.4),y2-9*u*Math.sin(a+.4));ctx.fill();
+}
+function zodiacRing(ctx,cx,cy,R,u,hlLon,planetColor){
+  const hl=zodiacOf(hlLon);
+  ZOD.forEach((z,i)=>{
+    const s=z[1],e=z[2]<z[1]?z[2]+360:z[2], on=z[0]+'자리'===hl;
+    ctx.lineWidth=18*u;ctx.strokeStyle=on?'rgba(143,240,207,.35)':(i%2?'rgba(155,166,212,.10)':'rgba(155,166,212,.17)');
+    ctx.beginPath();ctx.arc(cx,cy,R,-e*DEG,-s*DEG);ctx.stroke();
+    const mid=(s+e)/2, rr=R+(i%2?34:20)*u;
+    ctx.font=`${on?600:400} ${11*u}px ${FONT}`;ctx.fillStyle=on?'#ffffff':'rgba(201,209,245,.7)';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(z[0],cx+rr*Math.cos(mid*DEG),cy-rr*Math.sin(mid*DEG));
+  });
+  // 행성이 보이는 방향 표시
+  const x=cx+R*Math.cos(hlLon*DEG),y=cy-R*Math.sin(hlLon*DEG);
+  ctx.fillStyle=planetColor;ctx.beginPath();ctx.arc(x,y,5*u,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=1.2*u;ctx.stroke();
+}
+function orbitPath(ctx,k,jd,cx,cy,sc,u,color,alpha){
+  const el=elems(k,jd);ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=1.2*u;ctx.beginPath();
+  for(let m=0;m<=360;m+=3){const p=posFrom(el,m);const x=cx+p[0]*sc,y=cy-p[1]*sc;m?ctx.lineTo(x,y):ctx.moveTo(x,y)}
+  ctx.closePath();ctx.stroke();ctx.globalAlpha=1;
+}
+function planetDot(ctx,x,y,r,color,label,u,strong){
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  if(strong){ctx.strokeStyle='#fff';ctx.lineWidth=1.4*u;ctx.stroke()}
+  ctx.font=`${strong?600:400} ${11.5*u}px ${FONT}`;ctx.fillStyle=strong?'#fff':'rgba(201,209,245,.8)';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText(label,x+r+4*u,y-r-3*u);
+}
+function earthDisc(ctx,x,y,r,lonE,u){
+  ctx.fillStyle='#16244f';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#5aa8ff';ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,r,-(lonE+270)*DEG,-(lonE+90)*DEG);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(233,237,255,.85)';ctx.lineWidth=1.3*u;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();
+}
+function elongArc(ctx,ex,ey,sunLam,pLam,E,u){
+  const r=34*u, a1=sunLam, a2=sunLam+E;
+  ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.4*u;ctx.beginPath();
+  ctx.arc(ex,ey,r,-a1*DEG,-a2*DEG,E>0);ctx.stroke();
+  const mid=(a1+a2)/2;ctx.font=`600 ${12*u}px ${FONT}`;ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(Math.abs(E).toFixed(0)+'°',ex+(r+16*u)*Math.cos(mid*DEG),ey-(r+16*u)*Math.sin(mid*DEG));
+}
+function phaseDisc(cv,g,k,color){
+  const ctx=cv.getContext('2d'),W=cv.width,c=W/2;ctx.clearRect(0,0,W,W);
+  const D=EL[k].D, arcsec=206265*D/(g.dist*1.496e8);
+  const dmin={mercury:0.55,venus:0.27,mars:0.37,jupiter:3.95,saturn:8.0}[k];
+  const rmax=W*0.46, r=Math.max(3,rmax*Math.min(1,dmin/g.dist));
+  const ci=(g.r*g.r+g.dist*g.dist-g.R*g.R)/(2*g.r*g.dist), frac=(1+ci)/2;
+  const right=g.E>0; // 태양이 서쪽(오른쪽)에 있으면 오른쪽이 밝음
+  ctx.fillStyle='#1c2448';ctx.beginPath();ctx.arc(c,c,r,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(c,c,r,-Math.PI/2,Math.PI/2,!right);ctx.closePath();ctx.fill();
+  const rx=r*Math.abs(2*frac-1);ctx.fillStyle=frac>=.5?color:'#1c2448';ctx.beginPath();ctx.ellipse(c,c,rx,r,0,0,Math.PI*2);ctx.fill();
+  return {arcsec,frac};
+}
+
+/* ---------- 현상 찾기 ---------- */
+function findEvents(k,inner,jd0){
+  const start=Math.floor(jd0)-820, N=1640, Es=[],L=[],Dst=[];
+  for(let i=0;i<=N;i++){const g=geo(k,start+i);Es.push(g.E);L.push(g.lam);Dst.push(g.dist)}
+  const ev=[];const at=(i,f)=>start+i+f;
+  for(let i=1;i<N;i++){
+    const a=Es[i],b=Es[i+1];
+    if(a*b<0&&Math.abs(a)<90){const f=a/(a-b);ev.push({t:at(i,f),n:inner?(Dst[i]<1?'내합':'외합'):'합'})}
+    if(!inner&&a*b<0&&Math.abs(a)>90){const bb=b+(b<0?360:-360),f=(180*Math.sign(a)-a)/(bb-a);ev.push({t:at(i,f),n:'충'})}
+    if(!inner){for(const q of [90,-90]){if((a-q)*(b-q)<0&&Math.abs(a-b)<20)ev.push({t:at(i,(q-a)/(b-a)),n:q>0?'동구':'서구'})}}
+    if(inner){const d1=a-Es[i-1],d2=b-a;
+      if(d1>0&&d2<=0&&a>0)ev.push({t:at(i,0),n:'동방 최대이각',v:a});
+      if(d1<0&&d2>=0&&a<0)ev.push({t:at(i,0),n:'서방 최대이각',v:-a});}
+    else{const d1=wrap(L[i]-L[i-1]),d2=wrap(L[i+1]-L[i]);
+      if(d1>0&&d2<=0)ev.push({t:at(i,0),n:'유 (역행 시작)'});
+      if(d1<0&&d2>=0)ev.push({t:at(i,0),n:'유 (역행 끝)'});}
+  }
+  return ev.sort((x,y)=>x.t-y.t);
+}
+
+/* ---------- 계절 탭 ---------- */
+function drawSeasons(){
+  const cv=$('c-seasons'),ctx=fit(cv),W=cv.width,cx=W/2,cy=W/2,u=W/600,Ro=150*u,Rc=238*u;
+  ctx.clearRect(0,0,W,W);stars(ctx,W,W,u,1);
+  const P=(a,r)=>[cx+r*Math.cos(a*DEG),cy-r*Math.sin(a*DEG)];
+  const LE=earthLon(jd), md=LE;
+  ctx.lineWidth=26*u;
+  ctx.strokeStyle='rgba(143,240,207,0.10)';ctx.beginPath();ctx.arc(cx,cy,Rc,-(md+90)*DEG,-(md-90)*DEG);ctx.stroke();
+  ctx.strokeStyle='rgba(143,240,207,0.22)';ctx.beginPath();ctx.arc(cx,cy,Rc,-(md+30)*DEG,-(md-30)*DEG);ctx.stroke();
+  ctx.strokeStyle='rgba(255,191,71,0.07)';ctx.beginPath();ctx.arc(cx,cy,Rc,-(md+270)*DEG,-(md+90)*DEG);ctx.stroke();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`600 ${12*u}px ${FONT}`;
+  for(const s of SEASON_LABEL){const [x,y]=P(s.a,Rc+44*u);ctx.fillStyle=COLORS[s.k];ctx.globalAlpha=.75;ctx.fillText(s.n,x,y);ctx.globalAlpha=1}
+  for(const c of CONS){
+    const d=Math.abs(wrap(c.a-md)),[x,y]=P(c.a,Rc),front=d<=30,vis=d<90;
+    cluster(ctx,x,y,13*u,c,vis?1:.28,front);
+    ctx.font=`${front?600:400} ${11.5*u}px ${FONT}`;const [lx,ly]=P(c.a,Rc+22*u);
+    ctx.fillStyle=vis?(front?'#ffffff':'#d7ddff'):'rgba(155,166,212,.45)';ctx.fillText(c.n,lx,ly);
+  }
+  ctx.setLineDash([3*u,5*u]);ctx.strokeStyle='rgba(155,166,212,.45)';ctx.lineWidth=1.2*u;ctx.beginPath();ctx.arc(cx,cy,Ro,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  ctx.font=`${10.5*u}px ${FONT}`;const yr=fromJD(jd).y;
+  for(let m=1;m<=12;m++){const a=earthLon(toJD(yr,m,15));const [x,y]=P(a,Ro-20*u);ctx.fillStyle='rgba(155,166,212,.8)';ctx.fillText(m+'월',x,y);
+    const [t1,t2]=P(a,Ro-6*u),[t3,t4]=P(a,Ro+6*u);ctx.strokeStyle='rgba(155,166,212,.35)';ctx.beginPath();ctx.moveTo(t1,t2);ctx.lineTo(t3,t4);ctx.stroke()}
+  sunGlow(ctx,cx,cy,u,true);
+  const [ex,ey]=P(LE,Ro),[ax,ay]=P(md,Rc-20*u);
+  arrow(ctx,ex,ey,ax,ay,u,'#8ff0cf',true);
+  const [mx,my]=P(md,(Ro+Rc)/2);ctx.save();ctx.translate(mx,my);let rot=-md*DEG;if(Math.cos(rot)<0)rot+=Math.PI;ctx.rotate(rot);
+  ctx.fillStyle='#8ff0cf';ctx.font=`600 ${11*u}px ${FONT}`;ctx.fillText('한밤중에 보는 하늘',0,-10*u);ctx.restore();
+  const er=15*u;earthDisc(ctx,ex,ey,er,LE,u);
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex+er*Math.cos(md*DEG),ey-er*Math.sin(md*DEG),3.2*u,0,Math.PI*2);ctx.fill();
+  ctx.font=`600 ${11*u}px ${FONT}`;ctx.fillStyle='#cfe3ff';const [tx,ty]=P(LE+11,Ro+4*u);ctx.fillText('지구',tx,ty);
+  ctx.font=`${9.5*u}px ${FONT}`;ctx.fillStyle='rgba(255,214,140,.9)';ctx.fillText('낮',ex-Math.cos(LE*DEG)*(er+10*u),ey+Math.sin(LE*DEG)*(er+10*u));
+  ctx.fillStyle='rgba(200,215,255,.9)';ctx.fillText('밤',ex+Math.cos((LE+70)*DEG)*(er+11*u),ey-Math.sin((LE+70)*DEG)*(er+11*u));
+  ctx.textAlign='left';ctx.font=`${11*u}px ${FONT}`;
+  ctx.fillStyle='rgba(143,240,207,.9)';ctx.fillRect(14*u,W-40*u,14*u,8*u);ctx.fillStyle='#c9d1f5';ctx.fillText('밤에 보이는 쪽',34*u,W-36*u);
+  ctx.fillStyle='rgba(255,191,71,.6)';ctx.fillRect(14*u,W-22*u,14*u,8*u);ctx.fillStyle='#c9d1f5';ctx.fillText('태양 쪽(낮이라 안 보임)',34*u,W-18*u);
+
+  // 남쪽 하늘
+  const sv=$('c-sky'),k=fit(sv),SW=sv.width,SH=sv.height,su=SW/600,hz=SH*0.84;
+  const g=k.createLinearGradient(0,0,0,hz);g.addColorStop(0,'#060a1c');g.addColorStop(1,'#1a2552');k.fillStyle=g;k.fillRect(0,0,SW,SH);
+  for(const [x,y,s,t] of BG){if(y*SH<hz){k.fillStyle=`rgba(200,210,255,${0.12+t*0.3})`;k.beginPath();k.arc(x*SW,y*hz,s*su*.8,0,Math.PI*2);k.fill()}}
+  k.textAlign='center';k.textBaseline='middle';const vis=[],hid=[];
+  for(const c of CONS){const d=wrap(c.a-md);if(Math.abs(d)>=90){hid.push(c);continue}vis.push({c,d});
+    const x=SW/2-(d/90)*(SW*0.46),y=hz-Math.cos(d*DEG)*(hz*0.78)+8*su,front=Math.abs(d)<=30;
+    cluster(k,x,y,26*su,c,1,front);k.font=`${front?600:400} ${15*su}px ${FONT}`;k.fillStyle=front?'#fff':'#cfd6ff';k.fillText(c.n,x,Math.min(y+34*su,hz-10*su))}
+  k.fillStyle='#070a16';k.beginPath();k.moveTo(0,hz);for(let x=0;x<=SW;x+=SW/24)k.lineTo(x,hz-Math.abs(Math.sin(x*0.013/su))*10*su);k.lineTo(SW,SH);k.lineTo(0,SH);k.fill();
+  k.font=`600 ${15*su}px ${FONT}`;k.fillStyle='#9ba6d4';k.fillText('동',22*su,SH-14*su);k.fillText('남',SW/2,SH-14*su);k.fillText('서',SW-22*su,SH-14*su);
+  vis.sort((a,b)=>Math.abs(a.d)-Math.abs(b.d));const high=vis.filter(v=>Math.abs(v.d)<=30).map(v=>v.c.n),top=vis[0]&&vis[0].c;
+  $('nowText').innerHTML=top?`남쪽 하늘 높이: <b>${(high.length?high:[top.n]).join(', ')}</b> <span style="color:${COLORS[top.s]}">(${top.s}철 별자리)</span>`:'';
+  $('hiddenText').textContent='태양 쪽에 있어 볼 수 없는 별자리: '+hid.map(c=>c.n).join(', ');
+}
+// 계절 탭: 지구 끌기
+let drag=false;const sc=$('c-seasons');
+function dragTo(e){const r=sc.getBoundingClientRect();const x=e.clientX-r.left-r.width/2,y=-(e.clientY-r.top-r.height/2);
+  const target=norm(Math.atan2(y,x)/DEG), y0=fromJD(jd).y, base=toJD(y0,1,1);
+  let best=base,bd=999;for(let i=0;i<366;i++){const d=Math.abs(wrap(earthLon(base+i)-target));if(d<bd){bd=d;best=base+i}}setJD(best)}
+sc.addEventListener('pointerdown',e=>{drag=true;sc.setPointerCapture(e.pointerId);sc.style.cursor='grabbing';dragTo(e)});
+sc.addEventListener('pointermove',e=>{if(drag)dragTo(e)});
+sc.addEventListener('pointerup',()=>{drag=false;sc.style.cursor='grab'});
+
+/* ---------- 행성 탭 공통 ---------- */
+function drawPath(cvId,k,span,evs){
+  const cv=$(cvId),ctx=fit(cv),W=cv.width,H=cv.height,u=W/600;
+  ctx.fillStyle='#070b1d';ctx.fillRect(0,0,W,H);
+  const step=3,pts=[];let acc=0,prev=geo(k,jd);const cur=prev;
+  pts.push({t:0,x:0,b:cur.beta});
+  for(const dir of [1,-1]){acc=0;prev=cur;for(let t=step;t<=span;t+=step){const g=geo(k,jd+dir*t);acc+=wrap(g.lam-prev.lam);prev=g;pts.push({t:dir*t,x:acc,b:g.beta})}}
+  pts.sort((a,b)=>a.t-b.t);
+  const xmax=Math.max(4,...pts.map(p=>Math.abs(p.x)))*1.1, bmin=Math.min(...pts.map(p=>p.b)),bmax=Math.max(...pts.map(p=>p.b)),bm=(bmin+bmax)/2,br=Math.max(1.2,(bmax-bmin)*1.3);
+  const X=x=>W/2-(x/xmax)*(W*0.47), Y=b=>H*0.52-((b-bm)/br)*(H*0.7);
+  // 별자리 경계
+  ctx.textAlign='center';ctx.textBaseline='top';ctx.font=`${12*u}px ${FONT}`;
+  for(const z of ZOD){const rel=wrap(z[1]-cur.lam);for(const off of [0,360,-360]){const x=X(rel+off);if(x>0&&x<W){ctx.strokeStyle='rgba(155,166,212,.25)';ctx.lineWidth=1*u;ctx.setLineDash([3*u,4*u]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.setLineDash([])}}}
+  for(const z of ZOD){const e=z[2]<z[1]?z[2]+360:z[2],mid=wrap((z[1]+e)/2-cur.lam);const x=X(mid);if(x>10*u&&x<W-10*u){ctx.fillStyle='rgba(201,209,245,.65)';ctx.fillText(z[0],x,6*u)}}
+  // 경로
+  const col=EL[k].c;
+  for(const p of pts){ctx.fillStyle=p.t<0?'rgba(201,209,245,.35)':col;ctx.globalAlpha=p.t<0?1:.85;ctx.beginPath();ctx.arc(X(p.x),Y(p.b),2.3*u,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+  // 유 표시
+  ctx.font=`600 ${12*u}px ${FONT}`;ctx.fillStyle='#fff';ctx.textBaseline='bottom';
+  for(const ev of evs){if(ev.n.startsWith('유')&&Math.abs(ev.t-jd)<span){const p=pts.reduce((a,b)=>Math.abs(b.t-(ev.t-jd))<Math.abs(a.t-(ev.t-jd))?b:a);ctx.fillText('유',X(p.x),Y(p.b)-6*u)}}
+  ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2*u;ctx.beginPath();ctx.arc(X(0),Y(cur.beta),6*u,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.textBaseline='alphabetic';ctx.textAlign='left';ctx.font=`${12*u}px ${FONT}`;ctx.fillStyle='#9ba6d4';ctx.fillText('← 동',8*u,H-8*u);ctx.textAlign='right';ctx.fillText('서 →',W-8*u,H-8*u);
+  ctx.textAlign='center';ctx.fillText('흐린 점: 지난날 · 밝은 점: 앞으로',W/2,H-8*u);
+}
+function eventList(ulId,evs){
+  const ul=$(ulId);ul.innerHTML='';
+  evs.filter(e=>e.t>jd+0.5).slice(0,6).forEach(e=>{
+    const li=document.createElement('li'),days=Math.round(e.t-jd);
+    li.innerHTML=`<span>${fmt(e.t)}</span><span>${e.n}${e.v?` (${e.v.toFixed(0)}°)`:''} <span style="color:var(--muted)">· ${days}일 뒤</span></span>`;
+    const b=document.createElement('button');b.type='button';b.textContent='이동';b.addEventListener('click',()=>setJD(Math.floor(e.t)+0.5));li.appendChild(b);ul.appendChild(li);
+  });
+}
+function synodic(prefix,k,evs,conjName){
+  const P=EL[k].P, Pe=EL.earth.P, S=1/Math.abs(1/P-1/Pe);
+  const c=evs.filter(e=>e.n===conjName),prev=[...c].reverse().find(e=>e.t<=jd),next=c.find(e=>e.t>jd);
+  const meas=prev&&next?Math.round(next.t-prev.t)+'일':'—';
+  $(prefix+'-syn').innerHTML=`<div><b>${Math.round(P)}일</b><span>${EL[k].n} 공전주기</span></div><div><b>${Math.round(S)}일</b><span>회합주기 (계산)</span></div><div><b>${meas}</b><span>이번 주기 (실제)</span></div>`;
+  const inner=P<Pe;
+  $(prefix+'-formula').innerHTML=(inner?`1/S = 1/P − 1/E = 1/${Math.round(P)} − 1/365`:`1/S = 1/E − 1/P = 1/365 − 1/${Math.round(P)}`)
+    +(prev&&next?` · 실제: ${fmt(prev.t)} ${conjName} → ${fmt(next.t)} ${conjName}. 궤도가 타원이라 계산값과 조금 달라요.`:'');
+}
+function nearEvent(evs,days){let best=null;for(const e of evs){const d=Math.abs(e.t-jd);if(d<=days&&(!best||d<Math.abs(best.t-jd)))best=e}return best}
+
+/* ---------- 내행성 탭 ---------- */
+function drawInner(){
+  const cv=$('c-inner'),ctx=fit(cv),W=cv.width,cx=W/2,cy=W/2,u=W/600,R=232*u,sc=175*u/1.017;
+  ctx.clearRect(0,0,W,W);stars(ctx,W,W,u,.7);
+  const g=geo(innerK,jd),col=EL[innerK].c;
+  zodiacRing(ctx,cx,cy,R,u,g.lam,col);
+  for(const k of ['mercury','venus','earth'])orbitPath(ctx,k,jd,cx,cy,sc,u,k===innerK?col:(k==='earth'?'#5aa8ff':'#9ba6d4'),k===innerK||k==='earth'?.7:.3);
+  sunGlow(ctx,cx,cy,u*.8,true);
+  const E=g.e,ex=cx+E[0]*sc,ey=cy-E[1]*sc;
+  // 최대이각 한계(접선)
+  const a=elems(innerK,jd)[0],dE=Math.hypot(E[0],E[1]),th=Math.asin(Math.min(1,a/dE))/DEG;
+  ctx.setLineDash([2*u,5*u]);ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1*u;
+  for(const s of [1,-1]){const ang=g.sunLam+s*th,L=Math.sqrt(dE*dE-a*a)*sc*1.15;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex+L*Math.cos(ang*DEG),ey-L*Math.sin(ang*DEG));ctx.stroke()}
+  ctx.setLineDash([]);
+  // 다른 내행성
+  for(const k of ['mercury','venus']){if(k===innerK)continue;const p=helio(k,jd);planetDot(ctx,cx+p[0]*sc,cy-p[1]*sc,4*u,'rgba(201,209,245,.6)',EL[k].n,u,false)}
+  const px=cx+g.p[0]*sc,py=cy-g.p[1]*sc;
+  arrow(ctx,ex,ey,cx+(ex-cx)*.12,cy+(ey-cy)*.12,u,'rgba(255,191,71,.8)',true);
+  const dx=px-ex,dy=py-ey,dl=Math.hypot(dx,dy);arrow(ctx,ex,ey,px+dx/dl*22*u,py+dy/dl*22*u,u,col,false);
+  elongArc(ctx,ex,ey,g.sunLam,g.lam,g.E,u);
+  planetDot(ctx,px,py,7*u,col,EL[innerK].n,u,true);
+  const lonE=norm(Math.atan2(E[1],E[0])/DEG);earthDisc(ctx,ex,ey,9*u,lonE,u);
+  ctx.font=`600 ${11.5*u}px ${FONT}`;ctx.fillStyle='#cfe3ff';ctx.textAlign='center';ctx.fillText('지구',ex+Math.cos(lonE*DEG)*24*u,ey-Math.sin(lonE*DEG)*24*u);
+  ctx.textAlign='left';ctx.font=`${11*u}px ${FONT}`;ctx.fillStyle='#9ba6d4';ctx.fillText('점선: 이각이 커질 수 있는 한계',12*u,W-14*u);
+
+  // 정보
+  const evs=findEvents(innerK,false?0:true,jd), ne=nearEvent(evs,innerK==='mercury'?1.5:3);
+  const side=g.E>0?'동방이각':'서방이각';
+  $('in-head').textContent=ne?`${ne.n} 무렵`:`${side} ${Math.abs(g.E).toFixed(0)}°`;
+  let vis;
+  if(Math.abs(g.E)<(innerK==='mercury'?12:8))vis='태양과 너무 가까워서 보기 어려워요.';
+  else if(g.E>0)vis=`해가 진 뒤 <b>서쪽 하늘</b>에 보여요 (저녁).${innerK==='venus'?' 이때의 금성이 ‘개밥바라기’예요.':''}`;
+  else vis=`해 뜨기 전 <b>동쪽 하늘</b>에 보여요 (새벽).${innerK==='venus'?' 이때의 금성이 ‘샛별’이에요.':''}`;
+  $('in-vis').innerHTML=vis;
+  const ph=phaseDisc($('in-phase'),g,innerK,col);
+  $('in-phasetxt').textContent=`망원경 모양 · 밝은 부분 ${Math.round(ph.frac*100)}%`;
+  $('in-facts').innerHTML=`<dt>이각</dt><dd>${Math.abs(g.E).toFixed(1)}° ${g.E>0?'동쪽':'서쪽'} (태양 기준)</dd><dt>보이는 위치</dt><dd>${zodiacOf(g.lam)} 앞</dd><dt>지구와 거리</dt><dd>${g.dist.toFixed(2)} AU (약 ${(g.dist*1.496).toFixed(2)}억 km)</dd><dt>겉보기 크기</dt><dd>${ph.arcsec.toFixed(1)}″</dd>`;
+  synodic('in',innerK,evs,'내합');eventList('in-events',evs);
+  $('in-pathlabel').textContent=`하늘에서 지나간 길 (앞뒤 ${innerK==='mercury'?60:120}일)`;
+  drawPath('in-path',innerK,innerK==='mercury'?60:120,[]);
+}
+
+/* ---------- 외행성 탭 ---------- */
+function drawOuter(){
+  const cv=$('c-outer'),ctx=fit(cv),W=cv.width,cx=W/2,cy=W/2,u=W/600,R=232*u;
+  const el=elems(outerK,jd),sc=185*u/(el[0]*(1+el[1]));
+  ctx.clearRect(0,0,W,W);stars(ctx,W,W,u,.7);
+  const g=geo(outerK,jd),col=EL[outerK].c;
+  zodiacRing(ctx,cx,cy,R,u,g.lam,col);
+  orbitPath(ctx,'earth',jd,cx,cy,sc,u,'#5aa8ff',.7);
+  if(outerK!=='mars')orbitPath(ctx,'mars',jd,cx,cy,sc,u,'#9ba6d4',.25);
+  if(outerK==='saturn')orbitPath(ctx,'jupiter',jd,cx,cy,sc,u,'#9ba6d4',.25);
+  orbitPath(ctx,outerK,jd,cx,cy,sc,u,col,.7);
+  sunGlow(ctx,cx,cy,u*(outerK==='mars'?.8:.45),outerK==='mars');
+  const E=g.e,ex=cx+E[0]*sc,ey=cy-E[1]*sc,px=cx+g.p[0]*sc,py=cy-g.p[1]*sc;
+  const lonE=norm(Math.atan2(E[1],E[0])/DEG);
+  // 지구 공전 흔적(최근 60일) - 추월 느낌
+  ctx.fillStyle='rgba(90,168,255,.5)';for(let t=4;t<=60;t+=4){const q=helio('earth',jd-t);ctx.beginPath();ctx.arc(cx+q[0]*sc,cy-q[1]*sc,1.6*u,0,Math.PI*2);ctx.fill()}
+  ctx.fillStyle=col;ctx.globalAlpha=.5;for(let t=8;t<=120;t+=8){const q=helio(outerK,jd-t);ctx.beginPath();ctx.arc(cx+q[0]*sc,cy-q[1]*sc,1.6*u,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+  arrow(ctx,ex,ey,cx+(ex-cx)*.15,cy+(ey-cy)*.15,u,'rgba(255,191,71,.8)',true);
+  const dx=px-ex,dy=py-ey,dl=Math.hypot(dx,dy);arrow(ctx,ex,ey,px+dx/dl*22*u,py+dy/dl*22*u,u,col,false);
+  if(outerK==='mars'||Math.abs(g.E)>30)elongArc(ctx,ex,ey,g.sunLam,g.lam,g.E,u);
+  planetDot(ctx,px,py,(outerK==='mars'?7:9)*u,col,EL[outerK].n,u,true);
+  earthDisc(ctx,ex,ey,(outerK==='mars'?9:7)*u,lonE,u);
+  ctx.font=`600 ${11.5*u}px ${FONT}`;ctx.fillStyle='#cfe3ff';ctx.textAlign='center';ctx.fillText('지구',ex+Math.cos(lonE*DEG)*22*u,ey-Math.sin(lonE*DEG)*22*u);
+  const retro=wrap(geo(outerK,jd+0.5).lam-geo(outerK,jd-0.5).lam)<0;
+  if(retro){ctx.font=`600 ${13*u}px ${FONT}`;ctx.fillStyle='#ffd27a';ctx.textAlign='center';ctx.fillText('지구가 추월하는 중 → 역행',W/2,W-14*u)}
+  else{ctx.textAlign='left';ctx.font=`${11*u}px ${FONT}`;ctx.fillStyle='#9ba6d4';ctx.fillText('작은 점: 지난 공전 흔적',12*u,W-14*u)}
+
+  const evs=findEvents(outerK,false,jd),ne=nearEvent(evs,outerK==='mars'?3:5);
+  const ae=Math.abs(g.E);
+  $('out-head').textContent=ne?`${ne.n} 무렵`:(retro?'역행 중':`${g.E>0?'동방':'서방'}이각 ${ae.toFixed(0)}°`);
+  let vis;
+  if(ae<15)vis='태양과 같은 방향이라 보기 어려워요.';
+  else if(ae>160)vis='해가 지면 동쪽에서 떠서 <b>밤새도록</b> 보여요. 지구와 가장 가까워 가장 밝아요.';
+  else if(g.E>0)vis=`<b>초저녁</b> 하늘에서 보이고, 밤사이 서쪽으로 져요.`;
+  else vis=`밤늦게 떠서 <b>새벽</b> 하늘에서 잘 보여요.`;
+  $('out-vis').innerHTML=vis+(retro?' 지금은 별자리 사이를 거꾸로(서쪽으로) 움직이는 <b>역행</b> 중이에요.':'');
+  const ph=phaseDisc($('out-phase'),g,outerK,col);
+  $('out-phasetxt').textContent=`망원경 모양 · 밝은 부분 ${Math.round(ph.frac*100)}%`;
+  $('out-facts').innerHTML=`<dt>이각</dt><dd>${ae.toFixed(1)}° ${g.E>0?'동쪽':'서쪽'} (태양 기준)</dd><dt>보이는 위치</dt><dd>${zodiacOf(g.lam)} 앞 · ${retro?'역행':'순행'}</dd><dt>지구와 거리</dt><dd>${g.dist.toFixed(2)} AU (약 ${(g.dist*1.496).toFixed(1)}억 km)</dd><dt>겉보기 크기</dt><dd>${ph.arcsec.toFixed(1)}″</dd>`;
+  synodic('out',outerK,evs,'합');eventList('out-events',evs);
+  drawPath('out-path',outerK,120,evs);
+}
+
+function update(){
+  syncPicker();
+  if(tab==='seasons')drawSeasons();else if(tab==='inner')drawInner();else drawOuter();
+}
+new ResizeObserver(()=>update()).observe(document.querySelector('.wrap'));
+if(document.fonts)document.fonts.ready.then(update);
+const h=location.hash.slice(1);if(['seasons','inner','outer'].includes(h))showTab(h);else update();
+})();
+</script>
+
+</body></html>
