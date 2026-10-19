@@ -9,17 +9,15 @@
   <script>
     // 새 프로그램은 이 배열에 객체 한 줄을 추가하세요. author, school은 선택 항목입니다.
     const programs = [
-      { title: "계절별 별자리, 내행성, 외행성 시뮬레이터", category: "우주", description: "계절에 따른 별자리 변화와 내행성·외행성의 위치와 겉보기 운동 탐구", url: "./계절별 별자리, 내행성, 외행성 시뮬레이터.html", illustration: "orbits" },
-      { title: "동두천양주 밤하늘 관측 시뮬레이터", category: "우주", description: "우리 지역 기준의 밤하늘을 날짜·시간별로 관측", url: "https://parkyeonkyung00.github.io/sky/", illustration: "night" },
-      { title: "동두천고등학교 강현쌤과 함께하는 우주탐사", category: "우주", description: "행성을 골라 발사 속도를 조절하며 원궤도·타원 궤도·탈출 궤도를 비교하는 탈출속도·궤도운동 시뮬레이터", url: "https://dongducheon-space-lab.vercel.app/", illustration: "rocket" },
-      { title: "대기 안정도 & 구름 생성 시뮬레이터", category: "대기", description: "기온 감률과 단열 변화로 대기 안정도와 구름 생성 원리 탐구", url: "https://parkyeonkyung00.github.io/atmosphere2/", illustration: "cloud" },
-      { title: "2022 개정 교육과정 지구과학 데이터 탐구 프롬프트 워크시트", category: "탐구 자료", description: "2022 개정 교육과정 단원별 데이터 탐구 활동용 AI 프롬프트 워크시트", url: "https://raw.githack.com/parkyeonkyung00/earth-science-data-inquiry-worksheet/main/index.html", illustration: "worksheet" },
-      { title: "SciLab - 과학 학습 프로그램 플랫폼", category: "플랫폼", description: "과학 수업에 활용할 학습 프로그램을 만나는 플랫폼", url: "https://scilab-platform.vercel.app/", illustration: "earth" }
+      { title: "계절별 별자리, 내행성, 외행성 시뮬레이터", category: "우주", description: "계절에 따른 별자리 변화와 내행성·외행성의 위치와 겉보기 운동 탐구", url: "./계절별 별자리, 내행성, 외행성 시뮬레이터.html", illustration: "orbits", author: "김동규T" },
+      { title: "동두천양주 밤하늘 관측 시뮬레이터", category: "우주", description: "우리 지역 기준의 밤하늘을 날짜·시간별로 관측", url: "https://parkyeonkyung00.github.io/sky/", illustration: "night", author: "박연경T" },
+      { title: "동두천고등학교 강현쌤과 함께하는 우주탐사", category: "우주", description: "행성을 골라 발사 속도를 조절하며 원궤도·타원 궤도·탈출 궤도를 비교하는 탈출속도·궤도운동 시뮬레이터", url: "https://dongducheon-space-lab.vercel.app/", illustration: "rocket", author: "이강현T" },
+      { title: "대기 안정도 & 구름 생성 시뮬레이터", category: "대기", description: "기온 감률과 단열 변화로 대기 안정도와 구름 생성 원리 탐구", url: "https://parkyeonkyung00.github.io/atmosphere2/", illustration: "cloud", author: "박연경T" },
+      { title: "2022 개정 교육과정 지구과학 데이터 탐구 프롬프트 워크시트", category: "탐구 자료", description: "2022 개정 교육과정 단원별 데이터 탐구 활동용 AI 프롬프트 워크시트", url: "https://raw.githack.com/parkyeonkyung00/earth-science-data-inquiry-worksheet/main/index.html", illustration: "worksheet", author: "박연경T" },
+      { title: "SciLab - 과학 학습 프로그램 플랫폼", category: "플랫폼", description: "과학 수업에 활용할 학습 프로그램을 만나는 플랫폼", url: "https://scilab-platform.vercel.app/", illustration: "earth", author: "이우영T" }
     ];
     const siteInfo = {
-      teachers: "박연경, 이강현, 김동규, 이우영",
-      contact: "",
-      contactLabel: "문의처 추가 예정"
+      teachers: "박연경, 이강현, 김동규, 이우영"
     };
   </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
@@ -72,7 +70,8 @@
     h2 { margin: 0; font-size: 16px; font-weight: 750; letter-spacing: -.035em; line-height: 1.45; flex: 1; overflow-wrap: anywhere; }
     .tag { color: var(--accent); background: var(--tint); border-radius: 5px; padding: 2px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; margin-top: 2px; }
     .description { font-size: 12px; line-height: 1.65; color: var(--muted); margin: 0 0 10px; flex: 1; }
-    .author { font-size: 11px; color: #687b8b; margin: 0 0 9px; }
+    .card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 100px; flex-shrink: 0; }
+    .author { font-size: 11px; color: #687b8b; margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
     .launch { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 8px 12px; border-radius: 8px; background: var(--tint); color: var(--accent); font-size: 12px; font-weight: 700; transition: background .18s ease, color .18s ease; }
     .launch small { font-size: 10px; font-weight: 400; margin-left: auto; margin-right: 9px; opacity: .85; }
     .arrow { font-size: 17px; line-height: 1; transition: transform .18s ease; }
@@ -157,11 +156,11 @@
     <div>
       <p class="footer-title">함께 만들고, 함께 탐구하는 지구과학</p>
       <p>동두천·양주 지역 중·고등학교 지구과학 교사들이 수업을 위해 만든 공간입니다.<br>시뮬레이션과 데이터 탐구로 학생들의 질문이 발견으로 이어지길 바랍니다.</p>
+      <p>각 프로그램의 저작권은 동두천양주교육연구회 지구과학 연구회에 있습니다.</p>
       <span class="license"><span aria-hidden="true">✓</span> 교육 목적 자유 이용 · 각 프로그램의 이용 조건을 함께 확인해 주세요.</span>
     </div>
     <div class="footer-meta">
       <p><strong>제작 참여교사</strong> · <span id="teachers"></span></p>
-      <p><strong>문의</strong> · <span id="contact"></span></p>
       <p>모든 프로그램은 새 탭에서 열립니다.</p>
     </div>
   </footer>
@@ -212,11 +211,13 @@
       art.append(createElement("span", "art-label", artLabels[artKey]), createElement("span", "number", String(index + 1).padStart(2, "0")));
       const body = createElement("div", "card-body");
       const heading = createElement("div", "heading-row");
-      heading.append(createElement("h2", "", program.title), createElement("span", "tag", program.category));
-      body.append(heading, createElement("p", "description", program.description));
+      const meta = createElement("div", "card-meta");
+      meta.append(createElement("span", "tag", program.category));
       if (program.author || program.school) {
-        body.append(createElement("p", "author", program.author && program.school ? `${program.author}(${program.school})` : (program.author || program.school)));
+        meta.append(createElement("span", "author", program.author && program.school ? `${program.author}(${program.school})` : (program.author || program.school)));
       }
+      heading.append(createElement("h2", "", program.title), meta);
+      body.append(heading, createElement("p", "description", program.description));
       const launch = createElement("span", "launch", "바로 실행");
       const arrow = createElement("span", "arrow", "→");
       arrow.setAttribute("aria-hidden", "true");
@@ -250,14 +251,6 @@
       }
       selectCategory("전체");
       document.getElementById("teachers").textContent = siteInfo.teachers;
-      const contact = document.getElementById("contact");
-      if (siteInfo.contact) {
-        const link = createElement("a", "", siteInfo.contactLabel);
-        link.href = `mailto:${siteInfo.contact}`;
-        contact.append(link);
-      } else {
-        contact.textContent = siteInfo.contactLabel;
-      }
     } catch (error) {
       console.error("홈페이지 초기화 실패:", error);
       const notice = document.getElementById("error");
